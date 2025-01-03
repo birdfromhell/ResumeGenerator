@@ -52,7 +52,7 @@ def create_cv(pdf, cv_dict):
     pdf.set_font("Arial", size=12)
     
     # Tempat untuk foto
-    pdf.image("placeholder.png", x=10, y=20, w=30)  # Ganti dengan path foto jika ada
+    pdf.image("images.png", x=10, y=20, w=30)  # Ganti dengan path foto jika ada
     
     pdf.ln(35)  # Jarak setelah foto
 
