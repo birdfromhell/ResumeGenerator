@@ -1,57 +1,111 @@
 import openai
+from fpdf import FPDF
+import datetime
 import streamlit as st
-# import pyperclip
+import zipfile
+import os
 
-# Step 1: Obtain OpenAI API key
-openai.api_key = st.secrets["API_Key"]
-# openai.api_key = ""
+# Konfigurasi API OpenAI
+openai.api_key = 'YOUR_API_KEY'  # Ganti dengan API Key kamu
 
-
-def generate_cover_letter(prompt, model, temperature, max_tokens):
-    completions = openai.Completion.create(
-        engine=model,
-        prompt=prompt,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
+# Fungsi untuk mendapatkan data acak dari OpenAI
+def generate_random_cv_data():
+    prompt = (
+        "Buatkan data acak untuk CV dalam format berikut:\n"
+        "Nama: [Nama Lengkap]\n"
+        "Alamat: [Alamat Lengkap]\n"
+        "Email: [Email]\n"
+        "Telepon: [Nomor Telepon]\n"
+        "Tanggal Lahir: [Tanggal Lahir]\n"
+        "Pendidikan: [Tahun] - [Tahun]: [Gelar] di [Universitas]\n"
+        "Pengalaman Kerja: [Jabatan] di [Perusahaan]\n"
+        "Keterampilan: [Keterampilan 1], [Keterampilan 2], [Keterampilan 3]\n"
+        "Referensi: [Nama Referensi] - [Jabatan] di [Perusahaan]"
     )
-    message = completions.choices[0].text
-    return message
-
-def main():
-    st.set_page_config(page_title="GPT 求职信助手 OpenAI GPT Cover Letter Generator", page_icon=":guardsman:", layout="wide")
-    st.title("OpenAI GPT 求职信助手\nOpenAI GPT Cover Letter Generator")
-    st.markdown("根据你的能力以及职位要求，由 OpenAI GPT 帮助你生成一封专业的求职信。要想了解更多 -> https://axton.blog \n\n OpenAI GPT will help you generate a professional cover letter based on your profile and job description. To learn more -> https://axton.blog")
     
-    # Get user input
-    user_profile = st.text_area("输入你的特长 Your Profile:")
-    job_description = st.text_area("输入职位要求 Job Description:")
-    prompt = (f"Write a cover letter for this job:\n{job_description}\n\nMy profile:\n{user_profile}")
-    # prompt = (f"请用中文帮我写一封求职信，我的能力描述以及工作经验：\n{user_profile}\n\n职位描述：\n{job_description}")
-    model = "text-davinci-003"
-    temperature = st.slider("选择随机值 Choose Temperature:", 0.0, 1.0, 0.7)
-    max_tokens = st.slider("选择求职信长度 Choose Max Tokens:", 50, 500, 1000)
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
+    )
+    
+    return response['choices'][0]['message']['content']
 
-    if st.button("生成求职信 Generate"):
-        cover_letter = generate_cover_letter(prompt, model, temperature, max_tokens)
-        st.success("大功告成！求职信已经生成了！\n Success! Your Cover Letter is Ready")
-        st.markdown(cover_letter)
-        st.markdown("**点击以下按钮下载求职信 Click the Button to Download**")
-        
-        st.download_button(
-            label="下载求职信 Download",
-            data=cover_letter,
-            file_name='cover_letter.md',
-        )
-        
-        # if st.button("Download"):
-        #     with open("cover_letter.txt", "w") as f:
-        #         f.write(cover_letter)
-        #         f.close()
-        #         st.markdown("Your cover letter saved as **cover_letter.txt**")
-        #         st.markdown("You can also find the cover letter in the **Downloads** folder")
+# Fungsi untuk memparse data CV menjadi dictionary
+def parse_cv_data(cv_data):
+    lines = cv_data.strip().split('\n')
+    cv_dict = {}
+    for line in lines:
+        key, value = line.split(': ', 1)
+        cv_dict[key] = value
+    return cv_dict
 
-if __name__== "__main__":
-    main()
+# Fungsi untuk membuat CV
+def create_cv(pdf, cv_dict):
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, cv_dict['Nama'], ln=True, align='C')
+    pdf.set_font("Arial", size=12)
+    
+    for key in ['Alamat', 'Email', 'Telepon', 'Tanggal Lahir']:
+        pdf.cell(0, 10, f"{key}: {cv_dict[key]}", ln=True, align='L')
+    
+    pdf.ln(5)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Pendidikan", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, cv_dict['Pendidikan'])
+    pdf.ln(5)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Pengalaman Kerja", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, cv_dict['Pengalaman Kerja'])
+    pdf.ln(5)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Keterampilan", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, cv_dict['Keterampilan'], ln=True)
+    pdf.ln(5)
+
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Referensi", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, cv_dict['Referensi'], ln=True)
+
+# Streamlit UI
+st.title("Generator CV Otomatis")
+st.write("Klik tombol di bawah untuk menghasilkan 25 CV.")
+
+if st.button("Generate CV"):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    pdf_files = []
+    
+    for i in range(25):
+        cv_data = generate_random_cv_data()
+        cv_dict = parse_cv_data(cv_data)
+        file_name = f"cv_output_{i+1}.pdf"
+        pdf_files.append(file_name)
+        create_cv(pdf, cv_dict)
+        
+        # Simpan PDF
+        pdf.output(file_name)
+
+    # Membuat nama file ZIP dengan timestamp
+    zip_file_name = f"cv_output_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    
+    # Membuat ZIP
+    with zipfile.ZipFile(zip_file_name, 'w') as zipf:
+        for pdf_file in pdf_files:
+            zipf.write(pdf_file)
+            os.remove(pdf_file)  # Hapus file PDF setelah dimasukkan ke ZIP
+    
+    # Menyediakan file ZIP untuk diunduh
+    with open(zip_file_name, "rb") as f:
+        st.download_button("Download Semua CV", f, zip_file_name, "application/zip")
+
+st.write("Sistem ini menggunakan API OpenAI untuk menghasilkan data CV.")
