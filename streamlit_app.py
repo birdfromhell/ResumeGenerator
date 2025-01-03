@@ -12,7 +12,19 @@ def generate_random_cv_data():
         "messages": [
             {
                 "role": "user",
-                "content": "Buatkan data acak untuk CV dalam format berikut:\nNama: [Nama Lengkap]\nAlamat: [Alamat Lengkap]\nEmail: [Email]\nTelepon: [Nomor Telepon]\nTanggal Lahir: [Tanggal Lahir]\nPendidikan: [Tahun] - [Tahun]: [Gelar] di [Universitas]\nPengalaman Kerja: [Jabatan] di [Perusahaan]\nKeterampilan: [Keterampilan 1], [Keterampilan 2], [Keterampilan 3]\nReferensi: [Nama Referensi] - [Jabatan] di [Perusahaan]"
+                "content": "You are an AI that generates random yet realistic CV data based on the following structured format. Ensure that the data you create is consistent and remains unchanged if requested again. The format for the CV data is as follows:
+
+- Nama: [Nama Lengkap]
+- Alamat: [Alamat Lengkap]
+- Email: [Email]
+- Telepon: [Nomor Telepon]
+- Tanggal Lahir: [Tanggal Lahir]
+- Pendidikan: [Tahun] - [Tahun]: [Gelar] di [Universitas]
+- Pengalaman Kerja: [Jabatan] di [Perusahaan]
+- Keterampilan: [Keterampilan 1], [Keterampilan 2], [Keterampilan 3]
+- Referensi: [Nama Referensi] - [Jabatan] di [Perusahaan]
+
+Generate the CV data now, ensuring that all fields are filled with plausible information while maintaining the structure provided."
             }
         ],
         "model": "gpt-4o",
