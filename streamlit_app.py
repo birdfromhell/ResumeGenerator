@@ -1,39 +1,37 @@
-import openai
+import requests
 from fpdf import FPDF
 import datetime
 import streamlit as st
 import zipfile
 import os
 
-# Mengambil API key dari secrets
-openai.api_key = st.secrets["openai_api_key"]
-
-# Fungsi untuk mendapatkan data acak dari OpenAI
+# Fungsi untuk mendapatkan data acak dari RapidAPI
 def generate_random_cv_data():
+    url = "https://cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com/v1/chat/completions"
+    payload = {
+        "messages": [
+            {
+                "role": "user",
+                "content": "Buatkan data acak untuk CV dalam format berikut:\nNama: [Nama Lengkap]\nAlamat: [Alamat Lengkap]\nEmail: [Email]\nTelepon: [Nomor Telepon]\nTanggal Lahir: [Tanggal Lahir]\nPendidikan: [Tahun] - [Tahun]: [Gelar] di [Universitas]\nPengalaman Kerja: [Jabatan] di [Perusahaan]\nKeterampilan: [Keterampilan 1], [Keterampilan 2], [Keterampilan 3]\nReferensi: [Nama Referensi] - [Jabatan] di [Perusahaan]"
+            }
+        ],
+        "model": "gpt-4o",
+        "max_tokens": 100,
+        "temperature": 0.9
+    }
+    headers = {
+        "x-rapidapi-key": st.secrets["rapidapi_key"],  # Ambil API key dari secrets
+        "x-rapidapi-host": "cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com",
+        "Content-Type": "application/json"
+    }
+
     try:
-        prompt = (
-            "Buatkan data acak untuk CV dalam format berikut:\n"
-            "Nama: [Nama Lengkap]\n"
-            "Alamat: [Alamat Lengkap]\n"
-            "Email: [Email]\n"
-            "Telepon: [Nomor Telepon]\n"
-            "Tanggal Lahir: [Tanggal Lahir]\n"
-            "Pendidikan: [Tahun] - [Tahun]: [Gelar] di [Universitas]\n"
-            "Pengalaman Kerja: [Jabatan] di [Perusahaan]\n"
-            "Keterampilan: [Keterampilan 1], [Keterampilan 2], [Keterampilan 3]\n"
-            "Referensi: [Nama Referensi] - [Jabatan] di [Perusahaan]"
-        )
-        
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-        )
-        
-        return response['choices'][0]['message']['content']
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()  # Cek jika ada error pada permintaan
+        return response.json()['choices'][0]['message']['content']
     
     except Exception as e:
-        st.error(f"Gagal mengambil data dari OpenAI: {str(e)}")
+        st.error(f"Gagal mengambil data dari RapidAPI: {str(e)}")
         return None
 
 # Fungsi untuk memparse data CV menjadi dictionary
@@ -52,6 +50,11 @@ def create_cv(pdf, cv_dict):
     pdf.cell(0, 10, cv_dict['Nama'], ln=True, align='C')
     pdf.set_font("Arial", size=12)
     
+    # Tempat untuk foto
+    pdf.image("placeholder.png", x=10, y=20, w=30)  # Ganti dengan path foto jika ada
+    
+    pdf.ln(35)  # Jarak setelah foto
+
     for key in ['Alamat', 'Email', 'Telepon', 'Tanggal Lahir']:
         pdf.cell(0, 10, f"{key}: {cv_dict[key]}", ln=True, align='L')
     
@@ -90,7 +93,7 @@ if st.button("Generate CV"):
     
     pdf_files = []
     
-    for i in range(2):
+    for i in range(25):
         cv_data = generate_random_cv_data()
         if cv_data is None:
             st.error("Gagal mengenerate data CV. Silakan coba lagi.")
@@ -116,4 +119,4 @@ if st.button("Generate CV"):
     with open(zip_file_name, "rb") as f:
         st.download_button("Download Semua CV", f, zip_file_name, "application/zip")
 
-st.write("Sistem ini menggunakan API OpenAI untuk menghasilkan data CV.")
+st.write("Sistem ini menggunakan API RapidAPI untuk menghasilkan data CV.")
