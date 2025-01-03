@@ -90,7 +90,7 @@ if st.button("Generate CV"):
     
     pdf_files = []
     
-    for i in range(25):
+    for i in range(2):
         cv_data = generate_random_cv_data()
         if cv_data is None:
             st.error("Gagal mengenerate data CV. Silakan coba lagi.")
