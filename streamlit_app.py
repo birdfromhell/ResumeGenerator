@@ -20,7 +20,7 @@ def generate_random_cv_data():
         "temperature": 0.9
     }
     headers = {
-        "x-rapidapi-key": st.secrets["rapidapi_key"],  # Ambil API key dari secrets
+        "x-rapidapi-key": st.secrets["rapidapi_key"],
         "x-rapidapi-host": "cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com",
         "Content-Type": "application/json"
     }
@@ -39,8 +39,9 @@ def parse_cv_data(cv_data):
     lines = cv_data.strip().split('\n')
     cv_dict = {}
     for line in lines:
-        key, value = line.split(': ', 1)
-        cv_dict[key] = value
+        if ': ' in line:  # Pastikan ada ': ' dalam baris
+            key, value = line.split(': ', 1)
+            cv_dict[key] = value
     return cv_dict
 
 # Fungsi untuk membuat CV
@@ -98,6 +99,8 @@ if st.button("Generate CV"):
         if cv_data is None:
             st.error("Gagal mengenerate data CV. Silakan coba lagi.")
             break
+        
+        st.write(cv_data)  # Menampilkan data CV untuk debugging
         cv_dict = parse_cv_data(cv_data)
         file_name = f"cv_output_{i+1}.pdf"
         pdf_files.append(file_name)
