@@ -16,7 +16,7 @@ def generate_random_cv_data():
             }
         ],
         "model": "gpt-4o",
-        "max_tokens": 100,
+        "max_tokens": 3000,
         "temperature": 0.9
     }
     headers = {
