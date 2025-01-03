@@ -16,7 +16,7 @@ def generate_random_cv_data():
             }
         ],
         "model": "gpt-4o",
-        "max_tokens": 100,
+        "max_tokens": 3000,
         "temperature": 0.9
     }
     headers = {
@@ -51,14 +51,10 @@ def create_cv(pdf, cv_dict):
     pdf.cell(0, 10, cv_dict['Nama'], ln=True, align='C')
     pdf.set_font("Arial", size=12)
 
-    # Tempat untuk foto
-    image_path = "images.png"
-    if os.path.exists(image_path):  # Periksa apakah gambar ada
-        pdf.image(image_path, x=10, y=20, w=30)  # Ganti dengan path foto jika ada
-    else:
-        st.warning("Gambar placeholder tidak ditemukan.")
-
-    pdf.ln(35)  # Jarak setelah foto
+    # Menyediakan tempat untuk foto
+    pdf.cell(0, 30, "Tempat untuk Foto", ln=True, align='C')  # Judul untuk tempat foto
+    pdf.rect(10, pdf.get_y(), 30, 30)  # Menggambar kotak sebagai tempat foto
+    pdf.ln(35)  # Jarak setelah tempat foto
 
     for key in ['Alamat', 'Email', 'Telepon', 'Tanggal Lahir']:
         pdf.cell(0, 10, f"{key}: {cv_dict[key]}", ln=True, align='L')
