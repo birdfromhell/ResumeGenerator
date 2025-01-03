@@ -28,7 +28,7 @@ Generate the CV data now, ensuring that all fields are filled with plausible inf
             }
         ],
         "model": "gpt-4o",
-        "max_tokens": 5000,
+        "max_tokens": 3000,
         "temperature": 0.9
     }
     headers = {
@@ -69,32 +69,33 @@ def create_cv(pdf, cv_dict):
     pdf.ln(35)  # Jarak setelah tempat foto
 
     for key in ['Alamat', 'Email', 'Telepon', 'Tanggal Lahir']:
-        pdf.cell(0, 10, f"{key}: {cv_dict[key]}", ln=True, align='L')
+        if key in cv_dict:
+            pdf.cell(0, 10, f"{key}: {cv_dict[key]}", ln=True, align='L')
     
     pdf.ln(5)
 
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "Pendidikan", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, cv_dict['Pendidikan'])
+    pdf.multi_cell(0, 10, cv_dict.get('Pendidikan', 'Tidak ada data pendidikan'))
     pdf.ln(5)
 
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "Pengalaman Kerja", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, cv_dict['Pengalaman Kerja'])
+    pdf.multi_cell(0, 10, cv_dict.get('Pengalaman Kerja', 'Tidak ada data pengalaman'))
     pdf.ln(5)
 
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "Keterampilan", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, cv_dict['Keterampilan'], ln=True)
+    pdf.cell(0, 10, cv_dict.get('Keterampilan', 'Tidak ada data keterampilan'), ln=True)
     pdf.ln(5)
 
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, "Referensi", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, cv_dict['Referensi'], ln=True)
+    pdf.cell(0, 10, cv_dict.get('Referensi', 'Tidak ada data referensi'), ln=True)
 
 # Streamlit UI
 st.title("Generator CV Otomatis")
