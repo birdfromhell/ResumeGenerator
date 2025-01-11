@@ -1,15 +1,30 @@
 import streamlit as st
 import numpy as np
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 import io
+from datetime import datetime
 
-def export_history_to_pdf(history):
-    """Fungsi untuk export history ke PDF"""
+def export_history_to_pdf(history, title):
+    """Fungsi untuk export history ke PDF dengan judul kustom"""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
     
+    # Elemen PDF
+    elements = []
+
+    # Judul PDF
+    title_style = styles['Title']
+    elements.append(Paragraph(title, title_style))
+    
+    # Tanggal
+    date_style = styles['Normal']
+    elements.append(Paragraph(f"Tanggal: {datetime.now().strftime('%d %B %Y')}", date_style))
+    elements.append(Paragraph("<br/><br/>", styles['Normal']))
+
     # Persiapkan data tabel
     table_data = [['No', 'Input', 'Rata-rata']]
     for i, entry in enumerate(history, 1):
@@ -32,51 +47,56 @@ def export_history_to_pdf(history):
         ('GRID', (0,0), (-1,-1), 1, colors.black)
     ]))
     
+    # Tambahkan tabel ke elemen
+    elements.append(table)
+    
     # Buat PDF
-    elements = [table]
     doc.build(elements)
     
     buffer.seek(0)
     return buffer
 
 def main():
-    # Konfigurasi halaman
     st.set_page_config(
         page_title="Kalkulator Rata-Rata",
         page_icon="📊",
         layout="centered"
     )
 
-    # Judul dan deskripsi
-    st.title("🧮 Kalkulator Rata-Rata Profesional")
-    st.markdown("""
-    ### Fitur Utama:
-    - Hitung rata-rata dengan mudah
-    - Simpan history perhitungan
-    - Export history ke PDF
-    """)
-
-    # Sidebar untuk konfigurasi
-    st.sidebar.header("Pengaturan")
-    app_title = st.sidebar.text_input(
-        "Judul Aplikasi", 
-        value="Kalkulator Rata-Rata",
-        help="Ubah judul sesuai kebutuhan"
+    # Sidebar untuk judul kustom
+    st.sidebar.header("Pengaturan Kalkulator")
+    
+    # Input judul kustom
+    custom_title = st.sidebar.text_input(
+        "Judul Kalkulator", 
+        placeholder="Contoh: Rata-rata Nilai Kelas 10A",
+        help="Beri judul sesuai kebutuhan perhitungan"
     )
 
-    # Mode tampilan
-    view_mode = st.sidebar.radio(
-        "Mode Tampilan",
-        ["Default", "Kompak", "Detail"]
-    )
+    # Gunakan judul kustom atau default
+    title = custom_title if custom_title else "Kalkulator Rata-Rata"
+    
+    # Judul utama
+    st.title(f"🧮 {title}")
 
     # Inisialisasi session state untuk history
     if 'history' not in st.session_state:
         st.session_state.history = []
 
+    # Deskripsi tambahan (opsional)
+    description = st.sidebar.text_area(
+        "Deskripsi (Opsional)", 
+        placeholder="Tambahkan catatan atau keterangan tambahan",
+        help="Deskripsi akan membantu menjelaskan konteks perhitungan"
+    )
+
+    # Tampilkan deskripsi jika ada
+    if description:
+        st.markdown(f"**Keterangan:** {description}")
+
     # Input angka
     input_numbers = st.text_input(
-        f"{app_title} - Masukkan Angka",
+        "Masukkan Angka",
         help="Ketik angka-angka yang dipisah spasi"
     )
 
@@ -119,37 +139,19 @@ def main():
         if st.session_state.history:
             pdf_export = st.download_button(
                 label="Export History PDF",
-                data=export_history_to_pdf(st.session_state.history),
-                file_name="history_rata_rata.pdf",
+                data=export_history_to_pdf(st.session_state.history, title),
+                file_name=f"history_{title.replace(' ', '_')}.pdf",
                 mime="application/pdf",
                 type="secondary"
             )
 
-    # Bagian History dengan mode tampilan
+    # Bagian History
     st.header("History Perhitungan")
     
-    # Tampilkan history sesuai mode
+    # Tampilkan history
     if st.session_state.history:
-        if view_mode == "Default":
-            for i, entry in enumerate(st.session_state.history, 1):
-                st.markdown(f"**Perhitungan {i}:** Input `{entry['input']}` → Rata-rata: `{entry['result']:.2f}`")
-        
-        elif view_mode == "Kompak":
-            data = {
-                'No': list(range(1, len(st.session_state.history) + 1)),
-                'Input': [entry['input'] for entry in st.session_state.history],
-                'Rata-rata': [f"{entry['result']:.2f}" for entry in st.session_state.history]
-            }
-            st.dataframe(data, hide_index=True)
-        
-        else:  # Detail
-            for i, entry in enumerate(st.session_state.history, 1):
-                with st.expander(f"Perhitungan {i}"):
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Input", entry['input'])
-                    with col2:
-                        st.metric("Rata-rata", f"{entry['result']:.2f}")
+        for i, entry in enumerate(st.session_state.history, 1):
+            st.markdown(f"**Perhitungan {i}:** Input `{entry['input']}` → Rata-rata: `{entry['result']:.2f}`")
     else:
         st.info("Belum ada history perhitungan")
 
